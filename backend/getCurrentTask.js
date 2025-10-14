@@ -4,23 +4,21 @@ const TABLE_NAME = 'Tasks';
 
 exports.handler = async () => {
   // Step 1: Get top-level current task
-  const topLevel = await dynamo.scan({
+  let topLevel = await dynamo.scan({
     TableName: TABLE_NAME,
-    FilterExpression: 'IsCurrentTask = :val AND (attribute_not_exists(ParentTaskID) OR ParentTaskID = :empty)',
-    ExpressionAttributeValues: {
-      ':val': true,
-      ':empty': ''
-    }
+    FilterExpression: 'ParentTaskID = :empty',
+    ExpressionAttributeValues: { ':empty': '' }
   }).promise();
 
   if (!topLevel.Items.length) {
     return {
       statusCode: 404,
-      body: JSON.stringify({ error: 'No top-level current task found' })
+      body: JSON.stringify({ error: 'No top-level tasks found' })
     };
   }
 
-  let currentTask = topLevel.Items[0];
+  // Prefer current task, fallback to first
+  let currentTask = topLevel.Items.find(t => t.IsCurrentTask) || topLevel.Items[0];
 
   // Step 2: Traverse down current subtasks
   while (currentTask.SubTaskIDs && currentTask.SubTaskIDs.length > 0) {
@@ -32,10 +30,11 @@ exports.handler = async () => {
       }
     }).promise();
 
-    const currentChild = subTasks.Responses[TABLE_NAME].find(t => t.IsCurrentTask);
+    const children = subTasks.Responses[TABLE_NAME];
+    if (!children.length) break;
 
-    if (!currentChild) break; // No current child — stop traversal
-
+    // Prefer current child, fallback to first
+    const currentChild = children.find(t => t.IsCurrentTask) || children[0];
     currentTask = currentChild;
   }
 
