@@ -1,17 +1,41 @@
+const AWS = require('aws-sdk');
+const dynamo = new AWS.DynamoDB.DocumentClient();
+const TABLE_NAME = 'Tasks';
+
 exports.handler = async (event) => {
   const body = JSON.parse(event.body);
-  const newCurrentId = body.TaskID;
+  const targetId = body.TaskID;
 
-  const scan = await dynamo.scan({ TableName: TABLE_NAME, ProjectionExpression: 'TaskID' }).promise();
+  // Step 1: Get the target task
+  const targetTask = await dynamo.get({
+    TableName: TABLE_NAME,
+    Key: { TaskID: targetId }
+  }).promise();
 
-  const updates = scan.Items.map(item => {
+  if (!targetTask.Item) {
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ error: 'Task not found' })
+    };
+  }
+
+  const parentId = targetTask.Item.ParentTaskID || '';
+
+  // Step 2: Scan for sibling tasks
+  const siblings = await dynamo.scan({
+    TableName: TABLE_NAME,
+    FilterExpression: 'ParentTaskID = :pid',
+    ExpressionAttributeValues: { ':pid': parentId }
+  }).promise();
+
+  // Step 3: Update each sibling
+  const updates = siblings.Items.map(task => {
+    const isCurrent = task.TaskID === targetId;
     return dynamo.update({
       TableName: TABLE_NAME,
-      Key: { TaskID: item.TaskID },
+      Key: { TaskID: task.TaskID },
       UpdateExpression: 'SET IsCurrentTask = :val',
-      ExpressionAttributeValues: {
-        ':val': item.TaskID === newCurrentId
-      }
+      ExpressionAttributeValues: { ':val': isCurrent }
     }).promise();
   });
 
@@ -19,6 +43,6 @@ exports.handler = async (event) => {
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ message: `Task ${newCurrentId} set as current` })
+    body: JSON.stringify({ message: `Task ${targetId} set as current among siblings` })
   };
 };
