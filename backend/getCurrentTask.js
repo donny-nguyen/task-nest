@@ -1,15 +1,16 @@
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDBClient, ScanCommand, BatchGetItemCommand } from '@aws-sdk/client-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
-const dynamo = new DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
 const TABLE_NAME = process.env.TABLE_NAME;
 
 export const handler = async () => {
   // Step 1: Get top-level current task
-  let topLevel = await dynamo.scan({
+  let topLevel = await client.send(new ScanCommand({
     TableName: TABLE_NAME,
     FilterExpression: 'ParentTaskID = :empty',
-    ExpressionAttributeValues: { ':empty': '' }
-  }).promise();
+    ExpressionAttributeValues: marshall({ ':empty': '' })
+  }));
 
   if (!topLevel.Items.length) {
     return {
@@ -19,19 +20,19 @@ export const handler = async () => {
   }
 
   // Prefer current task, fallback to first
-  let currentTask = topLevel.Items.find(t => t.IsCurrentTask) || topLevel.Items[0];
+  let currentTask = unmarshall(topLevel.Items.find(t => unmarshall(t).IsCurrentTask) || topLevel.Items[0]);
 
   // Step 2: Traverse down current subtasks
   while (currentTask.SubTaskIDs && currentTask.SubTaskIDs.length > 0) {
-    const subTasks = await dynamo.batchGet({
+    const subTasks = await client.send(new BatchGetItemCommand({
       RequestItems: {
         [TABLE_NAME]: {
-          Keys: currentTask.SubTaskIDs.map(id => ({ TaskID: id }))
+          Keys: currentTask.SubTaskIDs.map(id => marshall({ TaskID: id }))
         }
       }
-    }).promise();
+    }));
 
-    const children = subTasks.Responses[TABLE_NAME];
+    const children = subTasks.Responses[TABLE_NAME].map(item => unmarshall(item));
     if (!children.length) break;
 
     // Prefer current child, fallback to first

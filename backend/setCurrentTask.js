@@ -1,6 +1,7 @@
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDBClient, GetItemCommand, ScanCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
-const dynamo = new DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
 const TABLE_NAME = process.env.TABLE_NAME;
 
 export const handler = async (event) => {
@@ -8,10 +9,10 @@ export const handler = async (event) => {
   const targetId = body.TaskID;
 
   // Step 1: Get the target task
-  const targetTask = await dynamo.get({
+  const targetTask = await client.send(new GetItemCommand({
     TableName: TABLE_NAME,
-    Key: { TaskID: targetId }
-  }).promise();
+    Key: marshall({ TaskID: targetId })
+  }));
 
   if (!targetTask.Item) {
     return {
@@ -20,24 +21,25 @@ export const handler = async (event) => {
     };
   }
 
-  const parentId = targetTask.Item.ParentTaskID || '';
+  const parentId = unmarshall(targetTask.Item).ParentTaskID || '';
 
   // Step 2: Scan for sibling tasks
-  const siblings = await dynamo.scan({
+  const siblings = await client.send(new ScanCommand({
     TableName: TABLE_NAME,
     FilterExpression: 'ParentTaskID = :pid',
-    ExpressionAttributeValues: { ':pid': parentId }
-  }).promise();
+    ExpressionAttributeValues: marshall({ ':pid': parentId })
+  }));
 
   // Step 3: Update each sibling
   const updates = siblings.Items.map(task => {
-    const isCurrent = task.TaskID === targetId;
-    return dynamo.update({
+    const taskData = unmarshall(task);
+    const isCurrent = taskData.TaskID === targetId;
+    return client.send(new UpdateItemCommand({
       TableName: TABLE_NAME,
-      Key: { TaskID: task.TaskID },
+      Key: marshall({ TaskID: taskData.TaskID }),
       UpdateExpression: 'SET IsCurrentTask = :val',
-      ExpressionAttributeValues: { ':val': isCurrent }
-    }).promise();
+      ExpressionAttributeValues: marshall({ ':val': isCurrent })
+    }));
   });
 
   await Promise.all(updates);

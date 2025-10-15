@@ -1,7 +1,8 @@
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDBClient, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 
-const dynamo = new DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
 const TABLE_NAME = process.env.TABLE_NAME;
 
 export const handler = async (event) => {
@@ -19,29 +20,32 @@ export const handler = async (event) => {
     IsCurrentTask: body.SetAsCurrent || false
   };
 
-  await dynamo.put({ TableName: TABLE_NAME, Item: item }).promise();
+  await client.send(new PutItemCommand({
+    TableName: TABLE_NAME,
+    Item: marshall(item)
+  }));
 
   // Update parent task with this subtask
   if (item.ParentTaskID) {
-    await dynamo.update({
+    await client.send(new UpdateItemCommand({
       TableName: TABLE_NAME,
-      Key: { TaskID: item.ParentTaskID },
+      Key: marshall({ TaskID: item.ParentTaskID }),
       UpdateExpression: 'SET SubTaskIDs = list_append(if_not_exists(SubTaskIDs, :empty), :new)',
-      ExpressionAttributeValues: {
+      ExpressionAttributeValues: marshall({
         ':new': [taskId],
         ':empty': []
-      }
-    }).promise();
+      })
+    }));
   }
 
   // Update previous task with this as next
   if (item.PreviousTaskID) {
-    await dynamo.update({
+    await client.send(new UpdateItemCommand({
       TableName: TABLE_NAME,
-      Key: { TaskID: item.PreviousTaskID },
+      Key: marshall({ TaskID: item.PreviousTaskID }),
       UpdateExpression: 'SET NextTaskID = :next',
-      ExpressionAttributeValues: { ':next': taskId }
-    }).promise();
+      ExpressionAttributeValues: marshall({ ':next': taskId })
+    }));
   }
 
   return {
