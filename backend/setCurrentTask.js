@@ -1,8 +1,9 @@
-const AWS = require('aws-sdk');
-const dynamo = new AWS.DynamoDB.DocumentClient();
+import { DynamoDB } from 'aws-sdk';
+
+const dynamo = new DynamoDB.DocumentClient();
 const TABLE_NAME = process.env.TABLE_NAME;
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const body = JSON.parse(event.body);
   const targetId = body.TaskID;
 

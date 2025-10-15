@@ -1,8 +1,9 @@
-const AWS = require('aws-sdk');
-const dynamo = new AWS.DynamoDB.DocumentClient();
+import { DynamoDB } from 'aws-sdk';
+
+const dynamo = new DynamoDB.DocumentClient();
 const TABLE_NAME = process.env.TABLE_NAME;
 
-exports.handler = async () => {
+export const handler = async () => {
   // Step 1: Get top-level current task
   let topLevel = await dynamo.scan({
     TableName: TABLE_NAME,

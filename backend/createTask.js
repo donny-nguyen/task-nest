@@ -1,9 +1,10 @@
-const AWS = require('aws-sdk');
-const { v4: uuidv4 } = require('uuid');
-const dynamo = new AWS.DynamoDB.DocumentClient();
+import { DynamoDB } from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
+
+const dynamo = new DynamoDB.DocumentClient();
 const TABLE_NAME = process.env.TABLE_NAME;
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const body = JSON.parse(event.body);
   const taskId = uuidv4();
 
