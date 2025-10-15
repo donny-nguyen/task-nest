@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_BASE = 'https://your-api-base-url'; // Replace with your actual API Gateway base URL
+const API_BASE = 'https://1hx7gikdwj.execute-api.us-east-1.amazonaws.com/prod';
 
 function App() {
   const [tasks, setTasks] = useState([]);
