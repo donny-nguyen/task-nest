@@ -1,7 +1,7 @@
 // getAllTasks.js
 const AWS = require('aws-sdk');
 const dynamo = new AWS.DynamoDB.DocumentClient();
-const TABLE_NAME = 'Tasks';
+const TABLE_NAME = process.env.TABLE_NAME;
 
 exports.handler = async () => {
   const params = {
