@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { DynamoDBClient, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
-import { marshall } from '@aws-sdk/util-dynamodb';
+import { DynamoDBClient, PutItemCommand, UpdateItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
 const client = new DynamoDBClient({});
 const TABLE_NAME = process.env.TABLE_NAME;
@@ -9,12 +9,23 @@ export const handler = async (event) => {
   const body = JSON.parse(event.body);
   const taskId = randomUUID();
 
+  let previousTaskID = body.PreviousTaskID || '';
+  
+  // If this is a minimal task (no ParentTaskID and no PreviousTaskID specified)
+  // Find the last top-level task and link to it
+  if (!body.ParentTaskID && !body.PreviousTaskID) {
+    const lastTopLevelTask = await findLastTopLevelTask();
+    if (lastTopLevelTask) {
+      previousTaskID = lastTopLevelTask.TaskID;
+    }
+  }
+
   const item = {
     TaskID: taskId,
     Title: body.Title,
     Description: body.Description || '',
     ParentTaskID: body.ParentTaskID || '',
-    PreviousTaskID: body.PreviousTaskID || '',
+    PreviousTaskID: previousTaskID,
     NextTaskID: '',
     SubTaskIDs: [],
     IsCurrentTask: body.SetAsCurrent || false
@@ -53,3 +64,31 @@ export const handler = async (event) => {
     body: JSON.stringify({ TaskID: taskId })
   };
 };
+
+// Helper function to find the last top-level task
+async function findLastTopLevelTask() {
+  try {
+    // Scan for all top-level tasks (no ParentTaskID and no NextTaskID)
+    const response = await client.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      FilterExpression: '(attribute_not_exists(ParentTaskID) OR ParentTaskID = :empty) AND (attribute_not_exists(NextTaskID) OR NextTaskID = :empty)',
+      ExpressionAttributeValues: marshall({
+        ':empty': ''
+      })
+    }));
+
+    if (!response.Items || response.Items.length === 0) {
+      return null;
+    }
+
+    // Unmarshall all items
+    const tasks = response.Items.map(item => unmarshall(item));
+    
+    // Return the first one found (there should only be one "last" task)
+    // If multiple exist, return the first one
+    return tasks[0];
+  } catch (error) {
+    console.error('Error finding last top-level task:', error);
+    return null;
+  }
+}
