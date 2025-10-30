@@ -21,12 +21,25 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Allow all origins (you can restrict to http://localhost:3000)
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "OPTIONS,GET,POST"
+      },
       body: JSON.stringify(filteredTasks),
     };
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to fetch tasks', details: error.message }),
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "OPTIONS,GET,POST"
+      },
+      body: JSON.stringify({
+        error: 'Failed to fetch tasks',
+        details: error.message,
+      }),
     };
   }
 };
