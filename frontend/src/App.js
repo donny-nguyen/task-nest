@@ -25,7 +25,7 @@ function App() {
 
   const fetchAllTasks = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/getAllTasks`);
+      const res = await axios.get(`${API_BASE}/getTasks`);
       const allTasks = res.data;
       setTasks(allTasks);
       const map = allTasks.reduce((acc, task) => {
