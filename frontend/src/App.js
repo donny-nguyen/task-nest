@@ -1,15 +1,13 @@
 // App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { Routes, Route } from 'react-router-dom';
 import TaskDetail from './TaskDetail';
+import TasksList from './TasksList';
 
 const API_BASE = 'https://1hx7gikdwj.execute-api.us-east-1.amazonaws.com/prod';
 
 function App() {
-  // const [tasks, setTasks] = useState([]); // unused
-  const [tasksMap, setTasksMap] = useState({});
-  const [topLevelTasks, setTopLevelTasks] = useState([]);
   const [createForm, setCreateForm] = useState({
     Title: '',
     Description: '',
@@ -18,39 +16,10 @@ function App() {
     SetAsCurrent: false,
   });
   const [showCreateForm, setShowCreateForm] = useState(false);
-  // const [setId, setSetId] = useState(''); // unused
-  // const [showSetForm, setShowSetForm] = useState(false); // unused
 
-  useEffect(() => {
-    fetchAllTasks();
-  }, []);
+  // handleCreateChange moved to TasksList
 
-  const fetchAllTasks = async () => {
-    try {
-      const res = await axios.get(`${API_BASE}/tasks`);
-      const allTasks = res.data;
-  // setTasks(allTasks); // unused
-      const map = allTasks.reduce((acc, task) => {
-        acc[task.TaskID] = task;
-        return acc;
-      }, {});
-      setTasksMap(map);
-      const topLevels = allTasks.filter((task) => !task.ParentTaskID);
-      setTopLevelTasks(topLevels);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
-  };
-
-  const handleCreateChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setCreateForm((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const handleCreateSubmit = async () => {
+  const handleCreateSubmit = async (refreshTasks) => {
     try {
       await axios.post(`${API_BASE}/tasks`, createForm);
       setShowCreateForm(false);
@@ -61,16 +30,16 @@ function App() {
         PreviousTaskID: '',
         SetAsCurrent: false,
       });
-      fetchAllTasks();
+      if (refreshTasks) refreshTasks();
     } catch (error) {
       console.error('Error creating task:', error);
     }
   };
 
-  const handleSetCurrent = async (taskId) => {
+  const handleSetCurrent = async (taskId, refreshTasks) => {
     try {
       await axios.post(`${API_BASE}/setCurrentTask`, { TaskID: taskId });
-      fetchAllTasks();
+      if (refreshTasks) refreshTasks();
     } catch (error) {
       console.error('Error setting current task:', error);
     }
@@ -85,43 +54,7 @@ function App() {
     setShowCreateForm(true);
   };
 
-  const TaskNode = ({ task }) => {
-    const children = (task.SubTaskIDs || [])
-      .map((id) => tasksMap[id])
-      .filter(Boolean);
-
-    return (
-      <div className={`p-4 border rounded-md ${task.IsCurrentTask ? 'bg-yellow-200' : 'bg-white'}`}>
-        <h3 className="text-lg font-semibold">{task.Title}</h3>
-        <p className="text-sm text-gray-600">{task.Description}</p>
-        <div className="mt-2 space-x-2">
-          <button
-            onClick={() => handleSetCurrent(task.TaskID)}
-            className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Set as Current
-          </button>
-          <button
-            onClick={() => openCreateForm(task.TaskID, '')}
-            className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-          >
-            Add Subtask
-          </button>
-          <button
-            onClick={() => openCreateForm(task.ParentTaskID, task.TaskID)}
-            className="px-2 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"
-          >
-            Add Next Task
-          </button>
-        </div>
-        <div className="mt-4 ml-4 space-y-4">
-          {children.map((child) => (
-            <TaskNode key={child.TaskID} task={child} />
-          ))}
-        </div>
-      </div>
-    );
-  };
+  // ...TaskNode moved to TasksList.js...
 
   return (
     <Routes>
@@ -138,74 +71,17 @@ function App() {
                 Add New Top-Level Task
               </button>
             </div>
-            <div className="space-y-6">
-              {topLevelTasks.length > 0 ? (
-                topLevelTasks.map((task) => <TaskNode key={task.TaskID} task={task} />)
-              ) : (
-                <p className="text-gray-500">No tasks found. Create one to get started.</p>
-              )}
-            </div>
-            {showCreateForm && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-white p-6 rounded-lg w-96">
-                  <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
-                  <input
-                    name="Title"
-                    value={createForm.Title}
-                    onChange={handleCreateChange}
-                    placeholder="Title"
-                    className="w-full mb-2 p-2 border rounded"
-                  />
-                  <textarea
-                    name="Description"
-                    value={createForm.Description}
-                    onChange={handleCreateChange}
-                    placeholder="Description"
-                    className="w-full mb-2 p-2 border rounded"
-                  />
-                  <input
-                    name="ParentTaskID"
-                    value={createForm.ParentTaskID}
-                    onChange={handleCreateChange}
-                    placeholder="Parent Task ID (optional)"
-                    className="w-full mb-2 p-2 border rounded"
-                    disabled // Pre-filled, but allow edit if needed
-                  />
-                  <input
-                    name="PreviousTaskID"
-                    value={createForm.PreviousTaskID}
-                    onChange={handleCreateChange}
-                    placeholder="Previous Task ID (optional)"
-                    className="w-full mb-2 p-2 border rounded"
-                    disabled // Pre-filled, but allow edit if needed
-                  />
-                  <label className="flex items-center mb-4">
-                    <input
-                      type="checkbox"
-                      name="SetAsCurrent"
-                      checked={createForm.SetAsCurrent}
-                      onChange={handleCreateChange}
-                      className="mr-2"
-                    />
-                    Set as Current
-                  </label>
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      onClick={() => setShowCreateForm(false)}
-                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleCreateSubmit}
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      Create
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            <TasksList
+              apiBase={API_BASE}
+              handleSetCurrent={handleSetCurrent}
+              openCreateForm={openCreateForm}
+              showCreateForm={showCreateForm}
+              setShowCreateForm={setShowCreateForm}
+              createForm={createForm}
+              setCreateForm={setCreateForm}
+              handleCreateSubmit={handleCreateSubmit}
+            />
+            {/* Create form modal moved to TasksList */}
           </div>
         }
       />
