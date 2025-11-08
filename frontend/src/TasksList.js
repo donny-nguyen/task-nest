@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import LoadingContext from './LoadingContext';
 
@@ -16,12 +16,7 @@ function TasksList({
   const [tasksMap, setTasksMap] = useState({});
   const [topLevelTasks, setTopLevelTasks] = useState([]);
 
-  useEffect(() => {
-    fetchAllTasks();
-    // eslint-disable-next-line
-  }, []);
-
-  const fetchAllTasks = async () => {
+  const fetchAllTasks = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`${apiBase}/tasks`);
@@ -38,7 +33,11 @@ function TasksList({
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiBase, setLoading]);
+
+  useEffect(() => {
+    fetchAllTasks();
+  }, [fetchAllTasks]);
 
   // Wrap setCurrent and create to refresh tasks after action
   const handleSetCurrentWithRefresh = async (taskId) => {

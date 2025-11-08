@@ -24,8 +24,7 @@ function TaskDetail() {
       }
     };
     fetchTask();
-    // eslint-disable-next-line
-  }, [taskID]);
+  }, [taskID, setLoading, setTask, setError]);
 
   if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
   if (!task) return <div className="p-6">Task not found.</div>;
