@@ -1,12 +1,11 @@
-import React, { useState, createContext } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { Routes, Route } from 'react-router-dom';
 import TaskDetail from './TaskDetail';
 import MainLayout from './MainLayout';
+import LoadingContext from './LoadingContext';
 
 const API_BASE = process.env.REACT_APP_API_BASE;
-
-export const LoadingContext = createContext({ loading: false, setLoading: () => {} });
 
 function App() {
   const [loading, setLoading] = useState(false);

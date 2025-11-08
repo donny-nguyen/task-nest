@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { LoadingContext } from './App';
+import LoadingContext from './LoadingContext';
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 

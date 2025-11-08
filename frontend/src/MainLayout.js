@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import TasksList from './TasksList';
-import { LoadingContext } from './App';
+import LoadingContext from './LoadingContext';
 
 function MainLayout({ apiBase, handleSetCurrent }) {
   const [createForm, setCreateForm] = useState({
