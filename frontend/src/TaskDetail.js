@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const API_BASE = 'https://1hx7gikdwj.execute-api.us-east-1.amazonaws.com/prod';
@@ -30,7 +30,12 @@ function TaskDetail() {
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">
-      <Link to="/" className="text-blue-500 hover:underline mb-4 inline-block">← Back to Tasks</Link>
+      <button
+        onClick={() => window.history.back()}
+        className="text-blue-500 hover:underline mb-4 inline-block bg-transparent border-none cursor-pointer p-0"
+      >
+        ← Back to Tasks
+      </button>
       <div className="bg-white p-6 rounded shadow">
         <h2 className="text-2xl font-bold mb-2">{task.Title}</h2>
         <p className="mb-4 text-gray-700">{task.Description}</p>
