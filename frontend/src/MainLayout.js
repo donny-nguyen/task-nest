@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import TasksList from './TasksList';
+import { LoadingContext } from './App';
 
 function MainLayout({ apiBase, handleSetCurrent }) {
   const [createForm, setCreateForm] = useState({
@@ -11,8 +12,10 @@ function MainLayout({ apiBase, handleSetCurrent }) {
     SetAsCurrent: false,
   });
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const { setLoading } = useContext(LoadingContext);
 
   const handleCreateSubmit = async (refreshTasks) => {
+    setLoading(true);
     try {
       await axios.post(`${apiBase}/tasks`, createForm);
       setShowCreateForm(false);
@@ -26,6 +29,8 @@ function MainLayout({ apiBase, handleSetCurrent }) {
       if (refreshTasks) refreshTasks();
     } catch (error) {
       console.error('Error creating task:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

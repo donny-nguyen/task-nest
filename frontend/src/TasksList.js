@@ -1,6 +1,6 @@
-// TasksList.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { LoadingContext } from './App';
 
 function TasksList({
   apiBase,
@@ -12,6 +12,7 @@ function TasksList({
   setCreateForm,
   handleCreateSubmit,
 }) {
+  const { setLoading } = useContext(LoadingContext);
   const [tasksMap, setTasksMap] = useState({});
   const [topLevelTasks, setTopLevelTasks] = useState([]);
 
@@ -21,6 +22,7 @@ function TasksList({
   }, []);
 
   const fetchAllTasks = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${apiBase}/tasks`);
       const allTasks = await res.json();
@@ -33,12 +35,16 @@ function TasksList({
       setTopLevelTasks(topLevels);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Wrap setCurrent and create to refresh tasks after action
   const handleSetCurrentWithRefresh = async (taskId) => {
+    setLoading(true);
     await handleSetCurrent(taskId, fetchAllTasks);
+    setLoading(false);
   };
   const handleCreateSubmitWithRefresh = async () => {
     await handleCreateSubmit(fetchAllTasks);

@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import { LoadingContext } from './App';
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
 function TaskDetail() {
   const { taskID } = useParams();
   const [task, setTask] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { setLoading } = useContext(LoadingContext);
 
   useEffect(() => {
     const fetchTask = async () => {
+      setLoading(true);
       try {
         const res = await axios.get(`${API_BASE}/tasks/${taskID}`);
         setTask(res.data);
@@ -22,9 +24,9 @@ function TaskDetail() {
       }
     };
     fetchTask();
+    // eslint-disable-next-line
   }, [taskID]);
 
-  if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
   if (!task) return <div className="p-6">Task not found.</div>;
 
