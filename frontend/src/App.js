@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Routes, Route } from 'react-router-dom';
 import TaskDetail from './TaskDetail';
-import TasksList from './TasksList';
+import MainLayout from './MainLayout';
 
 const API_BASE = 'https://1hx7gikdwj.execute-api.us-east-1.amazonaws.com/prod';
 
@@ -61,28 +61,16 @@ function App() {
       <Route
         path="/"
         element={
-          <div className="container mx-auto p-6 max-w-4xl">
-            <h1 className="text-3xl font-bold mb-6">Task Management App</h1>
-            <div className="mb-6">
-              <button
-                onClick={() => openCreateForm('', '')}
-                className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
-              >
-                Add New Top-Level Task
-              </button>
-            </div>
-            <TasksList
-              apiBase={API_BASE}
-              handleSetCurrent={handleSetCurrent}
-              openCreateForm={openCreateForm}
-              showCreateForm={showCreateForm}
-              setShowCreateForm={setShowCreateForm}
-              createForm={createForm}
-              setCreateForm={setCreateForm}
-              handleCreateSubmit={handleCreateSubmit}
-            />
-            {/* Create form modal moved to TasksList */}
-          </div>
+          <MainLayout
+            apiBase={API_BASE}
+            handleSetCurrent={handleSetCurrent}
+            openCreateForm={openCreateForm}
+            showCreateForm={showCreateForm}
+            setShowCreateForm={setShowCreateForm}
+            createForm={createForm}
+            setCreateForm={setCreateForm}
+            handleCreateSubmit={handleCreateSubmit}
+          />
         }
       />
       <Route path="/task/:taskID" element={<TaskDetail />} />
