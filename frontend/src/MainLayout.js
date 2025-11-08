@@ -1,16 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import TasksList from './TasksList';
 
-function MainLayout({
-  apiBase,
-  handleSetCurrent,
-  openCreateForm,
-  showCreateForm,
-  setShowCreateForm,
-  createForm,
-  setCreateForm,
-  handleCreateSubmit,
-}) {
+function MainLayout({ apiBase, handleSetCurrent }) {
+  const [createForm, setCreateForm] = useState({
+    Title: '',
+    Description: '',
+    ParentTaskID: '',
+    PreviousTaskID: '',
+    SetAsCurrent: false,
+  });
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const handleCreateSubmit = async (refreshTasks) => {
+    try {
+      await axios.post(`${apiBase}/tasks`, createForm);
+      setShowCreateForm(false);
+      setCreateForm({
+        Title: '',
+        Description: '',
+        ParentTaskID: '',
+        PreviousTaskID: '',
+        SetAsCurrent: false,
+      });
+      if (refreshTasks) refreshTasks();
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+  };
+
+  const openCreateForm = (parentId = '', prevId = '') => {
+    setCreateForm((prev) => ({
+      ...prev,
+      ParentTaskID: parentId,
+      PreviousTaskID: prevId,
+    }));
+    setShowCreateForm(true);
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">Task Management App</h1>
