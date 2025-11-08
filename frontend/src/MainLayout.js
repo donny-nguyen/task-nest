@@ -3,7 +3,9 @@ import axios from 'axios';
 import TasksList from './TasksList';
 import LoadingContext from './LoadingContext';
 
-function MainLayout({ apiBase, handleSetCurrent }) {
+const API_BASE = process.env.REACT_APP_API_BASE;
+
+function MainLayout({ handleSetCurrent }) {
   const [createForm, setCreateForm] = useState({
     Title: '',
     Description: '',
@@ -17,7 +19,7 @@ function MainLayout({ apiBase, handleSetCurrent }) {
   const handleCreateSubmit = async (refreshTasks) => {
     setLoading(true);
     try {
-      await axios.post(`${apiBase}/tasks`, createForm);
+      await axios.post(`${API_BASE}/tasks`, createForm);
       setShowCreateForm(false);
       setCreateForm({
         Title: '',
@@ -55,7 +57,7 @@ function MainLayout({ apiBase, handleSetCurrent }) {
         </button>
       </div>
       <TasksList
-        apiBase={apiBase}
+        apiBase={API_BASE}
         handleSetCurrent={handleSetCurrent}
         openCreateForm={openCreateForm}
         showCreateForm={showCreateForm}

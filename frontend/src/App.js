@@ -27,15 +27,7 @@ function App() {
     <LoadingContext.Provider value={{ loading, setLoading }}>
       {loading && <LoadingOverlay />}
       <Routes>
-        <Route
-          path="/"
-          element={
-            <MainLayout
-              apiBase={API_BASE}
-              handleSetCurrent={handleSetCurrent}
-            />
-          }
-        />
+        <Route path="/" element={<MainLayout handleSetCurrent={handleSetCurrent} />} />
         <Route path="/task/:taskID" element={<TaskDetail />} />
       </Routes>
     </LoadingContext.Provider>
