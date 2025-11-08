@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import TaskDetail from './TaskDetail';
 import MainLayout from './MainLayout';
 import LoadingContext from './LoadingContext';
+import LoadingOverlay from './LoadingOverlay';
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
@@ -24,11 +25,7 @@ function App() {
 
   return (
     <LoadingContext.Provider value={{ loading, setLoading }}>
-      {loading && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(255,255,255,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ fontSize: 24, fontWeight: 'bold' }}>Loading...</div>
-        </div>
-      )}
+      {loading && <LoadingOverlay />}
       <Routes>
         <Route
           path="/"
