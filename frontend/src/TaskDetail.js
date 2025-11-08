@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
-const API_BASE = 'https://1hx7gikdwj.execute-api.us-east-1.amazonaws.com/prod';
+const API_BASE = process.env.REACT_APP_API_BASE;
 
 function TaskDetail() {
   const { taskID } = useParams();

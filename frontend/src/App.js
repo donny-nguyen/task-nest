@@ -5,7 +5,7 @@ import { Routes, Route } from 'react-router-dom';
 import TaskDetail from './TaskDetail';
 import MainLayout from './MainLayout';
 
-const API_BASE = 'https://1hx7gikdwj.execute-api.us-east-1.amazonaws.com/prod';
+const API_BASE = process.env.REACT_APP_API_BASE;
 
 function App() {
   const handleSetCurrent = async (taskId, refreshTasks) => {
