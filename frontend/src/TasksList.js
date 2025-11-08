@@ -1,5 +1,6 @@
 // TasksList.js
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 function TasksList({
   apiBase,
@@ -58,7 +59,13 @@ function TasksList({
 
     return (
       <div className={`p-4 border rounded-md ${task.IsCurrentTask ? 'bg-yellow-200' : 'bg-white'}`}>
-        <h3 className="text-lg font-semibold">{task.Title}</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">
+            <Link to={`/task/${task.TaskID}`} className="text-blue-700 hover:underline">
+              {task.Title}
+            </Link>
+          </h3>
+        </div>
         <p className="text-sm text-gray-600">{task.Description}</p>
         <div className="mt-2 space-x-2">
           <button
