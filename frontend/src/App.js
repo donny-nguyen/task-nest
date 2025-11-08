@@ -1,11 +1,13 @@
 // App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Routes, Route } from 'react-router-dom';
+import TaskDetail from './TaskDetail';
 
 const API_BASE = 'https://1hx7gikdwj.execute-api.us-east-1.amazonaws.com/prod';
 
 function App() {
-  const [tasks, setTasks] = useState([]);
+  // const [tasks, setTasks] = useState([]); // unused
   const [tasksMap, setTasksMap] = useState({});
   const [topLevelTasks, setTopLevelTasks] = useState([]);
   const [createForm, setCreateForm] = useState({
@@ -16,8 +18,8 @@ function App() {
     SetAsCurrent: false,
   });
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [setId, setSetId] = useState('');
-  const [showSetForm, setShowSetForm] = useState(false);
+  // const [setId, setSetId] = useState(''); // unused
+  // const [showSetForm, setShowSetForm] = useState(false); // unused
 
   useEffect(() => {
     fetchAllTasks();
@@ -27,7 +29,7 @@ function App() {
     try {
       const res = await axios.get(`${API_BASE}/tasks`);
       const allTasks = res.data;
-      setTasks(allTasks);
+  // setTasks(allTasks); // unused
       const map = allTasks.reduce((acc, task) => {
         acc[task.TaskID] = task;
         return acc;
@@ -122,88 +124,93 @@ function App() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Task Management App</h1>
-
-      <div className="mb-6">
-        <button
-          onClick={() => openCreateForm('', '')}
-          className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
-        >
-          Add New Top-Level Task
-        </button>
-      </div>
-
-      <div className="space-y-6">
-        {topLevelTasks.length > 0 ? (
-          topLevelTasks.map((task) => <TaskNode key={task.TaskID} task={task} />)
-        ) : (
-          <p className="text-gray-500">No tasks found. Create one to get started.</p>
-        )}
-      </div>
-
-      {showCreateForm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
-            <input
-              name="Title"
-              value={createForm.Title}
-              onChange={handleCreateChange}
-              placeholder="Title"
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <textarea
-              name="Description"
-              value={createForm.Description}
-              onChange={handleCreateChange}
-              placeholder="Description"
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              name="ParentTaskID"
-              value={createForm.ParentTaskID}
-              onChange={handleCreateChange}
-              placeholder="Parent Task ID (optional)"
-              className="w-full mb-2 p-2 border rounded"
-              disabled // Pre-filled, but allow edit if needed
-            />
-            <input
-              name="PreviousTaskID"
-              value={createForm.PreviousTaskID}
-              onChange={handleCreateChange}
-              placeholder="Previous Task ID (optional)"
-              className="w-full mb-2 p-2 border rounded"
-              disabled // Pre-filled, but allow edit if needed
-            />
-            <label className="flex items-center mb-4">
-              <input
-                type="checkbox"
-                name="SetAsCurrent"
-                checked={createForm.SetAsCurrent}
-                onChange={handleCreateChange}
-                className="mr-2"
-              />
-              Set as Current
-            </label>
-            <div className="flex justify-end space-x-2">
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <div className="container mx-auto p-6 max-w-4xl">
+            <h1 className="text-3xl font-bold mb-6">Task Management App</h1>
+            <div className="mb-6">
               <button
-                onClick={() => setShowCreateForm(false)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                onClick={() => openCreateForm('', '')}
+                className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateSubmit}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Create
+                Add New Top-Level Task
               </button>
             </div>
+            <div className="space-y-6">
+              {topLevelTasks.length > 0 ? (
+                topLevelTasks.map((task) => <TaskNode key={task.TaskID} task={task} />)
+              ) : (
+                <p className="text-gray-500">No tasks found. Create one to get started.</p>
+              )}
+            </div>
+            {showCreateForm && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-white p-6 rounded-lg w-96">
+                  <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
+                  <input
+                    name="Title"
+                    value={createForm.Title}
+                    onChange={handleCreateChange}
+                    placeholder="Title"
+                    className="w-full mb-2 p-2 border rounded"
+                  />
+                  <textarea
+                    name="Description"
+                    value={createForm.Description}
+                    onChange={handleCreateChange}
+                    placeholder="Description"
+                    className="w-full mb-2 p-2 border rounded"
+                  />
+                  <input
+                    name="ParentTaskID"
+                    value={createForm.ParentTaskID}
+                    onChange={handleCreateChange}
+                    placeholder="Parent Task ID (optional)"
+                    className="w-full mb-2 p-2 border rounded"
+                    disabled // Pre-filled, but allow edit if needed
+                  />
+                  <input
+                    name="PreviousTaskID"
+                    value={createForm.PreviousTaskID}
+                    onChange={handleCreateChange}
+                    placeholder="Previous Task ID (optional)"
+                    className="w-full mb-2 p-2 border rounded"
+                    disabled // Pre-filled, but allow edit if needed
+                  />
+                  <label className="flex items-center mb-4">
+                    <input
+                      type="checkbox"
+                      name="SetAsCurrent"
+                      checked={createForm.SetAsCurrent}
+                      onChange={handleCreateChange}
+                      className="mr-2"
+                    />
+                    Set as Current
+                  </label>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => setShowCreateForm(false)}
+                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleCreateSubmit}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Create
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
-    </div>
+        }
+      />
+      <Route path="/task/:taskID" element={<TaskDetail />} />
+    </Routes>
   );
 }
 
