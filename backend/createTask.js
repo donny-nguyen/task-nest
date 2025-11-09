@@ -10,13 +10,21 @@ export const handler = async (event) => {
   const taskId = randomUUID();
 
   let previousTaskID = body.PreviousTaskID || '';
-  
+
   // If this is a minimal task (no ParentTaskID and no PreviousTaskID specified)
   // Find the last top-level task and link to it
   if (!body.ParentTaskID && !body.PreviousTaskID) {
     const lastTopLevelTask = await findLastTopLevelTask();
     if (lastTopLevelTask) {
       previousTaskID = lastTopLevelTask.TaskID;
+    }
+  }
+
+  // If ParentTaskID is provided but PreviousTaskID is not, find last sibling task
+  if (body.ParentTaskID && !body.PreviousTaskID) {
+    const lastSiblingTask = await findLastSiblingTask(body.ParentTaskID);
+    if (lastSiblingTask) {
+      previousTaskID = lastSiblingTask.TaskID;
     }
   }
 
@@ -88,12 +96,38 @@ async function findLastTopLevelTask() {
 
     // Unmarshall all items
     const tasks = response.Items.map(item => unmarshall(item));
-    
     // Return the first one found (there should only be one "last" task)
     // If multiple exist, return the first one
     return tasks[0];
   } catch (error) {
     console.error('Error finding last top-level task:', error);
+    return null;
+  }
+}
+
+// Helper function to find the last sibling task for a given ParentTaskID
+async function findLastSiblingTask(parentTaskID) {
+  try {
+    // Scan for all tasks with the given ParentTaskID and no NextTaskID
+    const response = await client.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      FilterExpression: 'ParentTaskID = :parent AND (attribute_not_exists(NextTaskID) OR NextTaskID = :empty)',
+      ExpressionAttributeValues: marshall({
+        ':parent': parentTaskID,
+        ':empty': ''
+      })
+    }));
+
+    if (!response.Items || response.Items.length === 0) {
+      return null;
+    }
+
+    // Unmarshall all items
+    const tasks = response.Items.map(item => unmarshall(item));
+    // Return the first one found (there should only be one "last" sibling)
+    return tasks[0];
+  } catch (error) {
+    console.error('Error finding last sibling task:', error);
     return null;
   }
 }
