@@ -15,20 +15,25 @@ function TasksList({
 }) {
   const { setLoading } = useContext(LoadingContext);
   const [tasksMap, setTasksMap] = useState({});
-  const [topLevelTasks, setTopLevelTasks] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
-  const fetchAllTasks = useCallback(async () => {
+  const fetchAllTasks = useCallback(async (parentTaskID = null) => {
     setLoading(true);
     try {
-      const res = await fetch(`${apiBase}/tasks`);
-      const allTasks = await res.json();
-      const map = allTasks.reduce((acc, task) => {
+      let url = `${apiBase}/tasks`;
+      if (parentTaskID !== null) {
+        url += `?parentTaskID=${parentTaskID}`;
+      }
+      const res = await fetch(url);
+
+      const tasks = await res.json();
+      setTasks(tasks);
+
+      const map = tasks.reduce((acc, task) => {
         acc[task.TaskID] = task;
         return acc;
       }, {});
       setTasksMap(map);
-      const topLevels = allTasks.filter((task) => !task.ParentTaskID);
-      setTopLevelTasks(topLevels);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
@@ -61,8 +66,8 @@ function TasksList({
   return (
     <>
       <div className="space-y-6">
-        {topLevelTasks.length > 0 ? (
-          topLevelTasks.map((task) => (
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
             <TaskNode
               key={task.TaskID}
               task={task}
