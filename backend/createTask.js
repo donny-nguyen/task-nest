@@ -9,37 +9,22 @@ export const handler = async (event) => {
   const body = JSON.parse(event.body);
   const taskId = randomUUID();
 
-  let previousTaskID = body.PreviousTaskID || '';
+  let previousTaskID = '';
 
-  // If this is a minimal task (no ParentTaskID and no PreviousTaskID specified)
+  // If this is a minimal task (no ParentTaskID specified)
   // Find the last top-level task and link to it
-  if (!body.ParentTaskID && !body.PreviousTaskID) {
+  if (!body.ParentTaskID) {
     const lastTopLevelTask = await findLastTopLevelTask();
     if (lastTopLevelTask) {
       previousTaskID = lastTopLevelTask.TaskID;
     }
   }
 
-  // If ParentTaskID is provided but PreviousTaskID is not, find last sibling task
-  if (body.ParentTaskID && !body.PreviousTaskID) {
+  // If ParentTaskID is provided, find last sibling task
+  if (body.ParentTaskID) {
     const lastSiblingTask = await findLastSiblingTask(body.ParentTaskID);
     if (lastSiblingTask) {
       previousTaskID = lastSiblingTask.TaskID;
-    }
-  }
-
-  // Prepare NextTaskID for the new task if PreviousTaskID is provided
-  let nextTaskID = '';
-  if (previousTaskID) {
-    // Get previous task to check if it has a next task
-    const prevTaskResp = await client.send(new ScanCommand({
-      TableName: TABLE_NAME,
-      FilterExpression: 'TaskID = :prev',
-      ExpressionAttributeValues: marshall({ ':prev': previousTaskID })
-    }));
-    const prevTask = prevTaskResp.Items && prevTaskResp.Items.length > 0 ? unmarshall(prevTaskResp.Items[0]) : null;
-    if (prevTask && prevTask.NextTaskID) {
-      nextTaskID = prevTask.NextTaskID;
     }
   }
 
@@ -49,7 +34,7 @@ export const handler = async (event) => {
     Description: body.Description || '',
     ParentTaskID: body.ParentTaskID || '',
     PreviousTaskID: previousTaskID,
-    NextTaskID: nextTaskID,
+    NextTaskID: '',
     SubTaskIDs: [],
     IsCurrentTask: body.SetAsCurrent || false
   };
@@ -72,7 +57,7 @@ export const handler = async (event) => {
     }));
   }
 
-  // If PreviousTaskID is provided, update previous and next task references
+  // Update previous task references
   if (item.PreviousTaskID) {
     // Update previous task's NextTaskID to new task
     await client.send(new UpdateItemCommand({
@@ -81,16 +66,6 @@ export const handler = async (event) => {
       UpdateExpression: 'SET NextTaskID = :next',
       ExpressionAttributeValues: marshall({ ':next': taskId })
     }));
-
-    // If previous task had a next task, update that next task's PreviousTaskID to new task
-    if (nextTaskID) {
-      await client.send(new UpdateItemCommand({
-        TableName: TABLE_NAME,
-        Key: marshall({ TaskID: nextTaskID }),
-        UpdateExpression: 'SET PreviousTaskID = :prev',
-        ExpressionAttributeValues: marshall({ ':prev': taskId })
-      }));
-    }
   }
 
   return {
